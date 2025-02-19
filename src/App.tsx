@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { ThemeProvider, createTheme } from "@mui/material/styles"
-import { CssBaseline, Container, List, Button, Box, AppBar, Toolbar, Typography, Snackbar, Alert } from "@mui/material"
+import { CssBaseline, Container, List, Button, Box, AppBar, Toolbar, Typography, Snackbar, Alert, Avatar } from "@mui/material"
 import Header from "./components/Header"
 import TaskInput from "./components/TaskInput"
 import TaskItem from "./components/TaskItem"
@@ -41,8 +41,19 @@ const TodoApp = () => {
   const { isAuthenticated, logout, user } = useAuth()
 
   useEffect(() => {
-    localStorage.setItem('tasks', JSON.stringify(tasks))
-  }, [tasks])
+    if (user?.id) {
+      const savedTasks = localStorage.getItem(`tasks_${user.id}`)
+      if (savedTasks) {
+        setTasks(JSON.parse(savedTasks))
+      }
+    }
+  }, [user?.id])
+
+  useEffect(() => {
+    if (user?.id) {
+      localStorage.setItem(`tasks_${user.id}`, JSON.stringify(tasks))
+    }
+  }, [tasks, user?.id])
 
   const handleError = (message: string) => {
     setError(message)
@@ -129,12 +140,17 @@ const TodoApp = () => {
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             Todo App
           </Typography>
-          <Typography variant="subtitle1" sx={{ mr: 2 }}>
-            Welcome, {user?.name}
-          </Typography>
-          <Button color="inherit" onClick={logout}>
-            Logout
-          </Button>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Avatar sx={{ bgcolor: 'secondary.main' }}>
+              {user?.email?.charAt(0).toUpperCase() || 'U'}
+            </Avatar>
+            <Typography variant="subtitle1">
+              {user?.email || 'User'}
+            </Typography>
+            <Button color="inherit" onClick={logout}>
+              Logout
+            </Button>
+          </Box>
         </Toolbar>
       </AppBar>
       <Container
