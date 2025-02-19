@@ -5,32 +5,59 @@ import EditIcon from "@mui/icons-material/Edit"
 import SaveIcon from "@mui/icons-material/Save"
 import CloseIcon from "@mui/icons-material/Close"
 import ImageIcon from "@mui/icons-material/Image"
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import type { Task } from "../type"
 
 interface TaskItemProps {
   task: Task
-  toggleTask: (id: number) => void
-  deleteTask: (id: number) => void
-  editTask: (id: number, name: string, description: string) => void
+  toggleTask: (id: number) => Promise<void>
+  deleteTask: (id: number) => Promise<void>
+  editTask: (id: number, name: string, description: string) => Promise<void>
 }
 
 const TaskItem = ({ task, toggleTask, deleteTask, editTask }: TaskItemProps) => {
   const [isEditing, setIsEditing] = useState(false)
   const [editedName, setEditedName] = useState(task.name)
   const [editedDescription, setEditedDescription] = useState(task.description)
-
-  const handleSave = () => {
-    editTask(task.id, editedName, editedDescription)
-    setIsEditing(false)
-  }
-
-  const handleCancel = () => {
+  const [isLoading, setIsLoading] = useState(false)
+  const handleSave = useCallback(async () => {
+    if (!editedName.trim()) return
+    
+    try {
+      setIsLoading(true)
+      await editTask(task.id, editedName.trim(), editedDescription.trim())
+      setIsEditing(false)
+    } catch (error) {
+      console.error('Failed to save task:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [editTask, task.id, editedName, editedDescription])
+  const handleCancel = useCallback(() => {
     setEditedName(task.name)
     setEditedDescription(task.description)
     setIsEditing(false)
-  }
-
+  }, [task.name, task.description])
+  const handleToggle = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      await toggleTask(task.id)
+    } catch (error) {
+      console.error('Failed to toggle task:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [toggleTask, task.id])
+  const handleDelete = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      await deleteTask(task.id)
+    } catch (error) {
+      console.error('Failed to delete task:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [deleteTask, task.id])
   return (
     <ListItem
       sx={{
@@ -40,10 +67,15 @@ const TaskItem = ({ task, toggleTask, deleteTask, editTask }: TaskItemProps) => 
         transition: "background-color 0.3s",
         flexDirection: "column",
         alignItems: "stretch",
+        opacity: isLoading ? 0.7 : 1,
+        pointerEvents: isLoading ? "none" : "auto",
       }}
     >
       <Box sx={{ display: "flex", alignItems: "center", width: "100%" }}>
-        <IconButton sx={{ bgcolor: "tan.200", mr: 2 }}>
+        <IconButton 
+          sx={{ bgcolor: "tan.200", mr: 2 }}
+          disabled={isLoading}
+        >
           <ImageIcon sx={{ color: "tan.700" }} />
         </IconButton>
         {isEditing ? (
@@ -54,6 +86,10 @@ const TaskItem = ({ task, toggleTask, deleteTask, editTask }: TaskItemProps) => 
               onChange={(e) => setEditedName(e.target.value)}
               size="small"
               sx={{ mb: 1 }}
+              disabled={isLoading}
+              placeholder="Task name"
+              error={!editedName.trim()}
+              helperText={!editedName.trim() ? "Name is required" : ""}
             />
             <TextField
               fullWidth
@@ -62,6 +98,8 @@ const TaskItem = ({ task, toggleTask, deleteTask, editTask }: TaskItemProps) => 
               size="small"
               multiline
               rows={2}
+              disabled={isLoading}
+              placeholder="Task description (optional)"
             />
           </Box>
         ) : (
@@ -74,10 +112,20 @@ const TaskItem = ({ task, toggleTask, deleteTask, editTask }: TaskItemProps) => 
         <ListItemSecondaryAction>
           {isEditing ? (
             <>
-              <IconButton onClick={handleSave} sx={{ color: "success.main" }}>
+              <IconButton 
+                onClick={handleSave} 
+                sx={{ color: "success.main" }}
+                disabled={isLoading || !editedName.trim()}
+                aria-label="Save changes"
+              >
                 <SaveIcon />
               </IconButton>
-              <IconButton onClick={handleCancel} sx={{ color: "error.main" }}>
+              <IconButton 
+                onClick={handleCancel} 
+                sx={{ color: "error.main" }}
+                disabled={isLoading}
+                aria-label="Cancel editing"
+              >
                 <CloseIcon />
               </IconButton>
             </>
@@ -85,8 +133,10 @@ const TaskItem = ({ task, toggleTask, deleteTask, editTask }: TaskItemProps) => 
             <>
               <IconButton
                 edge="end"
-                onClick={() => toggleTask(task.id)}
+                onClick={handleToggle}
                 sx={{ color: task.completed ? "white" : "grey.500" }}
+                disabled={isLoading}
+                aria-label={task.completed ? "Mark as incomplete" : "Mark as complete"}
               >
                 <CheckIcon />
               </IconButton>
@@ -94,13 +144,17 @@ const TaskItem = ({ task, toggleTask, deleteTask, editTask }: TaskItemProps) => 
                 edge="end"
                 onClick={() => setIsEditing(true)}
                 sx={{ color: task.completed ? "white" : "grey.500" }}
+                disabled={isLoading}
+                aria-label="Edit task"
               >
                 <EditIcon />
               </IconButton>
               <IconButton
                 edge="end"
-                onClick={() => deleteTask(task.id)}
+                onClick={handleDelete}
                 sx={{ color: task.completed ? "white" : "grey.500" }}
+                disabled={isLoading}
+                aria-label="Delete task"
               >
                 <DeleteIcon />
               </IconButton>
@@ -111,5 +165,6 @@ const TaskItem = ({ task, toggleTask, deleteTask, editTask }: TaskItemProps) => 
     </ListItem>
   )
 }
+
 export default TaskItem
 
