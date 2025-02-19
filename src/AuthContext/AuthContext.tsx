@@ -2,108 +2,151 @@
 
 import type React from "react"
 import { createContext, useState, useContext, useEffect } from "react"
-
-interface User {
-  username: string;
-  password: string;
-}
+import type { User } from "../type";
 
 interface AuthContextType {
-  isAuthenticated: boolean
-  currentUser: string | null
-  login: (username: string, password: string) => void
-  logout: () => void
-  signup: (username: string, password: string) => void
-  error: string | null
+  isAuthenticated: boolean;
+  user: User | null;
+  login: (email: string, password: string) => void;
+  logout: () => void;
+  signup: (email: string, password: string, confirmPassword: string) => void;
+  error: string | null;
+  isLoading: boolean;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null)
+const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return localStorage.getItem('isAuthenticated') === 'true'
-  })
-  const [currentUser, setCurrentUser] = useState<string | null>(() => {
-    return localStorage.getItem('currentUser')
-  })
-  const [users, setUsers] = useState<User[]>(() => {
-    const savedUsers = localStorage.getItem('users')
-    return savedUsers ? JSON.parse(savedUsers) : [{ username: "user", password: "password" }]
-  })
-  const [error, setError] = useState<string | null>(null)
+    return localStorage.getItem('isAuthenticated') === 'true';
+  });
+  const [user, setUser] = useState<User | null>(() => {
+    const savedUser = localStorage.getItem('user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [registeredUsers, setRegisteredUsers] = useState<User[]>(() => {
+    const savedUsers = localStorage.getItem('registeredUsers');
+    return savedUsers ? JSON.parse(savedUsers) : [];
+  });
 
   useEffect(() => {
-    localStorage.setItem('users', JSON.stringify(users))
-  }, [users])
+    localStorage.setItem('registeredUsers', JSON.stringify(registeredUsers));
+  }, [registeredUsers]);
 
   useEffect(() => {
-    localStorage.setItem('isAuthenticated', isAuthenticated.toString())
-  }, [isAuthenticated])
-
-  useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem('currentUser', currentUser)
-    } else {
-      localStorage.removeItem('currentUser')
-    }
-  }, [currentUser])
-
-  const login = (username: string, password: string) => {
-    const user = users.find(u => u.username === username && u.password === password)
     if (user) {
-      setIsAuthenticated(true)
-      setCurrentUser(username)
-      setError(null)
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('isAuthenticated', 'true');
     } else {
-      setError("Invalid credentials")
+      localStorage.removeItem('user');
+      localStorage.setItem('isAuthenticated', 'false');
     }
-  }
+  }, [user]);
 
-  const signup = (username: string, password: string) => {
-    if (!username.trim() || !password.trim()) {
-      setError("Username and password are required")
-      return
+  const signup = (email: string, password: string, confirmPassword: string) => {
+    setIsLoading(true);
+    try {
+      if (!email || !password || !confirmPassword) {
+        throw new Error("All fields are required");
+      }
+
+      if (password !== confirmPassword) {
+        throw new Error("Passwords do not match");
+      }
+
+      if (password.length < 6) {
+        throw new Error("Password must be at least 6 characters");
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        throw new Error("Invalid email format");
+      }
+
+      const userExists = registeredUsers.some(user => user.email === email);
+      if (userExists) {
+        throw new Error("Email already registered");
+      }
+
+      const newUser = {
+        id: Date.now().toString(),
+        username: email.split('@')[0],
+        email,
+        password
+      };
+
+      setRegisteredUsers([...registeredUsers, newUser]);
+      setUser(newUser);
+      setIsAuthenticated(true);
+      // setError(null);
+    } catch (err) {
+      console.error(err);
+      // setError(err.message);
+      setIsAuthenticated(false);
+      setUser(null);
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters long")
-      return
+  const login = (email: string, password: string) => {
+    setIsLoading(true);
+    try {
+      if (!email || !password) {
+        throw new Error("Email and password are required");
+      }
+
+      const existingUser = registeredUsers.find(user => user.email === email);
+      if (!existingUser) {
+        throw new Error("User not found");
+      }
+
+      if (existingUser.password !== password) {
+        throw new Error("Invalid password");
+      }
+
+      setUser(existingUser);
+      setIsAuthenticated(true);
+      setError(null);
+    } catch (err) {
+      console.error(err);
+      // setError(err.message);
+      setIsAuthenticated(false);
+      setUser(null);
+    } finally {
+      setIsLoading(false);
     }
-
-    if (users.some(u => u.username === username)) {
-      setError("Username already exists")
-      return
-    }
-
-    setUsers([...users, { username, password }])
-    setError("Registration successful! Please login.")
-  }
+  };
 
   const logout = () => {
-    setIsAuthenticated(false)
-    setCurrentUser(null)
-    setError(null)
-  }
+    setIsAuthenticated(false);
+    setUser(null);
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('user');
+  };
 
   return (
     <AuthContext.Provider value={{ 
       isAuthenticated, 
-      currentUser, 
+      user, 
       login, 
       logout, 
       signup, 
-      error 
+      error,
+      isLoading
     }}>
       {children}
     </AuthContext.Provider>
-  )
-}
+  );
+};
 
 export const useAuth = () => {
-  const context = useContext(AuthContext)
+  const context = useContext(AuthContext);
   if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider")
+    throw new Error("useAuth must be used within an AuthProvider");
   }
-  return context
-}
+  return context;
+};
 

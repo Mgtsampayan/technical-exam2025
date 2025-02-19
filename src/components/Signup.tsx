@@ -2,17 +2,18 @@
 
 import type React from "react"
 import { useState } from "react"
-import { TextField, Button, Box, Typography, Container, Link } from "@mui/material"
+import { TextField, Button, Box, Typography, Container, Link, CircularProgress } from "@mui/material"
 import { useAuth } from "../AuthContext/AuthContext"
 
 const Signup: React.FC<{ onToggleForm: () => void }> = ({ onToggleForm }) => {
-    const [username, setUsername] = useState("")
+    const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
-    const { signup, error } = useAuth()
+    const [confirmPassword, setConfirmPassword] = useState("")
+    const { signup, error, isLoading } = useAuth()
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
-        signup(username, password)
+        signup(email, password, confirmPassword)
     }
 
     return (
@@ -50,13 +51,14 @@ const Signup: React.FC<{ onToggleForm: () => void }> = ({ onToggleForm }) => {
                         margin="normal"
                         required
                         fullWidth
-                        id="username"
-                        label="Username"
-                        name="username"
-                        autoComplete="username"
+                        id="email"
+                        label="Email Address"
+                        name="email"
+                        autoComplete="email"
                         autoFocus
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                     />
                     <TextField
                         margin="normal"
@@ -70,8 +72,26 @@ const Signup: React.FC<{ onToggleForm: () => void }> = ({ onToggleForm }) => {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                     />
-                    <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }}>
-                        Sign Up
+                    <TextField
+                        margin="normal"
+                        required
+                        fullWidth
+                        name="confirmPassword"
+                        label="Confirm Password"
+                        type="password"
+                        id="confirmPassword"
+                        autoComplete="new-password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                    />
+                    <Button 
+                        type="submit" 
+                        fullWidth 
+                        variant="contained" 
+                        sx={{ mt: 3, mb: 2 }}
+                        disabled={isLoading}
+                    >
+                        {isLoading ? <CircularProgress size={24} color="inherit" /> : "Sign Up"}
                     </Button>
                     <Box sx={{ textAlign: 'center' }}>
                         <Link component="button" variant="body2" onClick={onToggleForm}>

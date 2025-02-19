@@ -2,19 +2,19 @@
 
 import type React from "react"
 import { useState } from "react"
-import { TextField, Button, Box, Typography, Container, Link } from "@mui/material"
+import { TextField, Button, Box, Typography, Container, Link, CircularProgress } from "@mui/material"
 import { useAuth } from "../AuthContext/AuthContext"
 import Signup from "./Signup"
 
 const Login: React.FC = () => {
-  const [username, setUsername] = useState("")
+  const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isSignup, setIsSignup] = useState(false)
-  const { login, error } = useAuth()
+  const { login, error, isLoading } = useAuth()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    login(username, password)
+    login(email, password)
   }
 
   if (isSignup) {
@@ -56,13 +56,14 @@ const Login: React.FC = () => {
             margin="normal"
             required
             fullWidth
-            id="username"
-            label="Username"
-            name="username"
-            autoComplete="username"
+            id="email"
+            label="Email Address"
+            name="email"
+            autoComplete="email"
             autoFocus
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
           <TextField
             margin="normal"
@@ -76,8 +77,14 @@ const Login: React.FC = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }}>
-            Sign In
+          <Button 
+            type="submit" 
+            fullWidth 
+            variant="contained" 
+            sx={{ mt: 3, mb: 2 }}
+            disabled={isLoading}
+          >
+            {isLoading ? <CircularProgress size={24} color="inherit" /> : "Sign In"}
           </Button>
           <Box sx={{ textAlign: 'center' }}>
             <Link component="button" variant="body2" onClick={() => setIsSignup(true)}>
