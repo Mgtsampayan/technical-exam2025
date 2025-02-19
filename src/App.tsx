@@ -50,6 +50,7 @@ const TodoApp = () => {
           }
         }
       } catch (err) {
+        console.error(err);
         handleError('Error loading tasks');
       } finally {
         setIsLoading(false);
@@ -84,6 +85,7 @@ const TodoApp = () => {
         userId: user?.id 
       }]);
     } catch (err) {
+      console.error(err);
       handleError('Error adding task');
     } finally {
       setIsLoading(false);
@@ -97,6 +99,7 @@ const TodoApp = () => {
         task.id === id ? { ...task, completed: !task.completed } : task
       ));
     } catch (err) {
+      console.error(err);
       handleError('Error updating task');
     } finally {
       setIsLoading(false);
@@ -108,6 +111,7 @@ const TodoApp = () => {
       setIsLoading(true);
       setTasks(tasks.filter((task) => task.id !== id));
     } catch (err) {
+      console.error(err);
       handleError('Error deleting task');
     } finally {
       setIsLoading(false);
@@ -125,6 +129,7 @@ const TodoApp = () => {
         task.id === id ? { ...task, name: name.trim(), description: description.trim() } : task
       ));
     } catch (err) {
+      console.error(err);
       handleError('Error editing task');
     } finally {
       setIsLoading(false);
@@ -136,6 +141,7 @@ const TodoApp = () => {
       setIsLoading(true);
       setTasks(tasks.filter((task) => !task.completed));
     } catch (err) {
+      console.error(err);
       handleError('Error removing completed tasks');
     } finally {
       setIsLoading(false);
@@ -171,7 +177,8 @@ const TodoApp = () => {
       <Container maxWidth="sm" sx={{ py: 4 }}>
         <Box sx={{ bgcolor: "background.paper", borderRadius: 2, p: 3, boxShadow: 3 }}>
           <Header />
-          <TaskInput addTask={addTask} disabled={isLoading} />
+          <TaskInput addTask={addTask} /> 
+          {/* disabled={isLoading} */}
           {isLoading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
               <CircularProgress />
@@ -186,7 +193,7 @@ const TodoApp = () => {
                     toggleTask={toggleTask} 
                     deleteTask={deleteTask} 
                     editTask={editTask}
-                    disabled={isLoading}
+                    // disabled={isLoading}
                   />
                 ))}
               </List>
