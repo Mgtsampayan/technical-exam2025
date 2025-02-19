@@ -48,7 +48,7 @@ const TaskInput = ({ addTask }: TaskInputProps) => {
           "& .MuiInput-underline:before": { borderBottom: "none" },
           "& .MuiInput-underline:hover:not(.Mui-disabled):before": { borderBottom: "none" },
         }}
-        onKeyPress={(e) => {cm
+        onKeyDown={(e) => {
           if (e.key === "Enter") {
             handleAddTask()
           }
@@ -56,7 +56,11 @@ const TaskInput = ({ addTask }: TaskInputProps) => {
       />
       <IconButton
         onClick={handleAddTask}
-        sx={{ bgcolor: "navy.900", color: "white", "&:hover": { bgcolor: "navy.800" } }}
+        sx={{
+          bgcolor: "navy.900",
+          color: "white",
+          "&:hover": { bgcolor: "navy.800" }
+        }}
       >
         <AddIcon />
       </IconButton>
